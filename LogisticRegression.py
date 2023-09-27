@@ -17,7 +17,7 @@ class MyLogReg:
     def __call__(self) -> str:
         return f"MyLogReg class: n_iter={self.n_iter}, learning_rate={self.learning_rate}"
 
-    def __sigmoid(self, z: float) -> float:
+    def __sigmoid(self, z: Union[np.array, float]) -> Union[np.array, float]:
         return 1 / (1 + np.exp(z))
 
     def __log_loss(self, y_pred: np.array, y: np.array):
@@ -37,13 +37,22 @@ class MyLogReg:
             print(f"start | {loss}")
         for i in range(1, self.n_iter+1):
             z = np.dot(self.weights, X.T)
-            y_pred = y_pred = self.__sigmoid(-z)
+            y_pred = self.__sigmoid(-z)
             loss = self.__log_loss(y_pred, y)
             grads = (y_pred-y) @ X /len(X)
             self.weights -= self.learning_rate * grads
             if verbose:
                 if i % verbose == 0:
                     z = np.dot(self.weights, X.T)
-                    y_pred = y_pred = self.__sigmoid(-z)
+                    y_pred = self.__sigmoid(-z)
                     loss = np.mean(y*np.log(y_pred + 1e-15) + (1-y)*np.log(1-y_pred + 1e-15))
                     print(f"{i} | {loss}")
+
+    def predict_proba(self, X: pd.DataFrame) -> np.array:
+        X = add_fictive(X.values)
+        z = np.dot(self.weights, X.T)
+        y_pred = self.__sigmoid(-z)
+        return y_pred
+
+    def predict(self, X:pd.DataFrame) -> np.array:
+        return (self.predict_proba(X) > 0.5).astype(int)
