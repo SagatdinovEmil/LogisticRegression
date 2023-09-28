@@ -56,3 +56,52 @@ class MyLogReg:
 
     def predict(self, X:pd.DataFrame) -> np.array:
         return (self.predict_proba(X) > 0.5).astype(int)
+
+    def calc_TP(self, y: np.array, y_pred: np.array) -> float:
+        return ((y_pred == 1) & (y == 1)).sum()
+
+    def calc_FP(self, y: np.array, y_pred: np.array) -> float:
+        return ((y_pred == 1) & (y == 0)).sum()
+
+    def calc_TN(self, y: np.array, y_pred: np.array) -> float:
+        return ((y_pred == 0) & (y == 0)).sum()
+
+    def calc_FN(self, y: np.array, y_pred: np.array) -> float:
+        return ((y_pred == 0) & (y == 1)).sum()
+
+    def calc_accuracy(self, y: np.array, y_pred: np.array) -> float:
+        return (y == y_pred).sum() / len(y)
+
+    def calc_precision(self, y: np.array, y_pred: np.array) -> float:
+        TP = self.calc_TP(y, y_pred)
+        FP = self.calc_FP(y, y_pred)
+        return TP / (TP+FP)
+
+    def calc_recall(self, y: np.array, y_pred: np.array) -> float:
+        TP = self.calc_TP(y, y_pred)
+        FN = self.calc_FN(y, y_pred)
+        return TP / (TP+FN)
+
+    def calc_F1(self, y: np.array, y_pred: np.array) -> float:
+        precision = self.calc_precision(y, y_pred)
+        recall = self.calc_recall(y, y_pred)
+        return 2 * (precision * recall) / (precision + recall)
+
+    def calc_roc_auc(self, y: np.array, y_pred_proba: np.array) -> float:
+        positive_samples: int = (y == 1).sum()
+        negative_samples: int = (y == 0).sum()
+        asc_score_indices = np.argsort(y_pred_proba)
+        y = np.flip(y[asc_score_indices])
+        scores = np.flip(y_pred_proba[asc_score_indices])
+        roc_auc_sum: float = 0
+        for i in range(len(y)):
+            if y[i] == 0:
+                for j in range(i):
+                    
+                    if scores[j] > scores[i]:
+                        print(f"{scores[j]}>{scores[i]}")
+                        roc_auc_sum += 1
+                    elif scores[j] == scores[i]:
+                        print(f"{scores[j]}=={scores[i]}")
+                        roc_auc_sum += 0.5
+        return (1 / (positive_samples * negative_samples)) * roc_auc_sum
